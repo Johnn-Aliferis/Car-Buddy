@@ -1,0 +1,2 @@
+rootProject.name='Car Buddy'
+include ':app'
