@@ -6,7 +6,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -22,12 +21,18 @@ import android.os.Bundle;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
+import android.telephony.PhoneStateListener;
+import android.telephony.TelephonyManager;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+
+import butterknife.BindView;
+import butterknife.ButterKnife;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -38,10 +43,11 @@ public class MainActivity extends AppCompatActivity {
     private String message;
     private int positionOfSpokenWord;
 
+    @BindView(R.id.textView4)
+    TextView myTextview;
+    @BindView(R.id.myconst)
+    ConstraintLayout constraint;
     AnimationDrawable animationDrawable;
-    ConstraintLayout constraintLayout;
-    Button myButton;
-    ProgressBar progress;
     mySpeechRecogniser listener = new mySpeechRecogniser();
     SpeechRecognizer mSpeechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
 
@@ -49,9 +55,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        constraintLayout = findViewById(R.id.myconst);
-        myButton = findViewById(R.id.button3);
-        progress = findViewById(R.id.simpleProgressBar);
+        ButterKnife.bind(this);
+        myTextview.setText(null);
         startAnimation();
         dontLock();
         muteAudio();
@@ -59,6 +64,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    // Requesting permissions
     private void requestAudioPermissions() {
         if(ContextCompat.checkSelfPermission( this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED ){
             ActivityCompat.requestPermissions(MainActivity.this,
@@ -81,6 +87,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    // Getting result of permissions granted by user
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -107,26 +114,29 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    // Initiate background animation
     public void startAnimation() {
-        animationDrawable = (AnimationDrawable) constraintLayout.getBackground();
+        animationDrawable = (AnimationDrawable) constraint.getBackground();
         animationDrawable.setEnterFadeDuration(2500);
         animationDrawable.setExitFadeDuration(4500);
         animationDrawable.start();
     }
 
-
+    // Keep application from locking
     public void dontLock() {
         KeyguardManager keyguardManager = (KeyguardManager) getSystemService(Activity.KEYGUARD_SERVICE);
         KeyguardManager.KeyguardLock lock = keyguardManager.newKeyguardLock(KEYGUARD_SERVICE);
         lock.disableKeyguard();
     }
 
-
+    // Start speech Recogniser
     public void startRecognising() {
         mSpeechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
         Intent mSpeechRecognizerIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         mSpeechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
                 RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        mSpeechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE,
+                "el");
         mSpeechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE,
                 this.getPackageName());
         mSpeechRecognizer.setRecognitionListener(listener);
@@ -134,13 +144,20 @@ public class MainActivity extends AppCompatActivity {
         startActivity(mSpeechRecognizerIntent);
     }
 
+    // Restart speech recogniser
     public void restartSpeechListener() {
         mSpeechRecognizer.stopListening();
         mSpeechRecognizer.destroy();
         startRecognising();
     }
 
+    // Listening state of phone call & initiate phone call
     public void startPhoneCall() throws SecurityException{
+        PhoneCallListener phoneListener = new PhoneCallListener();
+        TelephonyManager telephonyManager = (TelephonyManager) this
+                .getSystemService(Context.TELEPHONY_SERVICE);
+        telephonyManager.listen(phoneListener,
+                PhoneStateListener.LISTEN_CALL_STATE);
         Intent phoneIntent = new Intent(Intent.ACTION_CALL);
         phoneIntent.setData(Uri.parse(numberToCall));
         startActivity(phoneIntent);
@@ -228,20 +245,22 @@ public class MainActivity extends AppCompatActivity {
                     .getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
             try {
 
-            if (matches.contains("hi")) {
-                myButton.setText("HI");
+                if (matches.contains("Hi" ) ||matches.contains("hi" ) ) {
+                myTextview.setText("Hi");
                 }
-            else if (matches.contains("call mom") || matches.contains("call Mom")) {
-                myButton.setText("Calling Mom...");
+            else if (matches.contains("call home") || matches.contains("call Home")) {
+                myTextview.setText("Calling Home...");
                 numberToCall="tel:2109655279";
                 // Todo : Get list of contacts on user's phone and not parse the numbers hard-coded !
+                // Todo : Maybe translate the speech input to users
+                // Todo : Later date -->  implement model for speech recognition with TfLite.
                 requestPhoneCallPermission();
             }
             else if (matches.contains("close")) {
                 MainActivity.this.finish();
             }
             else {
-                myButton.setText("Nothing");
+                myTextview.setText("Nothing");
                 }
             startRecognising();
             }
@@ -256,6 +275,34 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onEvent(int eventType, Bundle params) {
 
+        }
+    }
+
+    // Declare inner class declaration for phone listener
+
+    private class PhoneCallListener extends PhoneStateListener {
+
+        private boolean isPhoneCalling = false;
+
+        @Override
+        public void onCallStateChanged(int state, String incomingNumber) {
+
+            if (TelephonyManager.CALL_STATE_OFFHOOK == state) {
+                isPhoneCalling = true;
+            }
+
+            if (TelephonyManager.CALL_STATE_IDLE == state) {
+                // run when class initial and phone call ended, need detect flag
+                if (isPhoneCalling) {
+                    // restart app
+                    Intent i = getBaseContext().getPackageManager()
+                            .getLaunchIntentForPackage(
+                                    getBaseContext().getPackageName());
+                    i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    startActivity(i);
+                    isPhoneCalling = false;
+                }
+            }
         }
     }
 }
