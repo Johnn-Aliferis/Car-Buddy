@@ -1,7 +1,6 @@
 package com.example.carbuddy;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
@@ -10,7 +9,6 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.KeyguardManager;
-import android.app.TaskInfo;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -23,9 +21,6 @@ import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
-import android.view.View;
-import android.widget.Button;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -163,6 +158,9 @@ public class MainActivity extends AppCompatActivity {
         startActivity(phoneIntent);
     }
 
+
+    //Todo : check this because it mutes, but user can choose to unmute ,
+    // which will be very annoying hearing that beep all the time !
     public void muteAudio(){
         AudioManager audio = (AudioManager) this.getSystemService(Context.AUDIO_SERVICE);
         audio.setStreamVolume(AudioManager.STREAM_MUSIC, 0,  AudioManager.FLAG_SHOW_UI);
