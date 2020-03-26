@@ -37,6 +37,7 @@ public class MainActivity extends AppCompatActivity {
     private String myVoiceCommand = null;
     private String message;
     private int positionOfSpokenWord;
+    private ArrayList<String> myList = new ArrayList<>();
 
     @BindView(R.id.textView4)
     TextView myTextview;
@@ -81,6 +82,13 @@ public class MainActivity extends AppCompatActivity {
             startPhoneCall();
         }
     }
+    private void requestContactsPermission() {
+        if(ContextCompat.checkSelfPermission( this, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED ){
+            ActivityCompat.requestPermissions(MainActivity.this,
+                    new String[]{Manifest.permission.READ_CONTACTS},
+                    3);
+        }
+    }
 
     // Getting result of permissions granted by user
     @Override
@@ -101,6 +109,16 @@ public class MainActivity extends AppCompatActivity {
                     grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Toast.makeText(this,"Permission granted !", Toast.LENGTH_LONG).show();
                 startPhoneCall();
+            }
+            else {
+                Toast.makeText(this, "You must allow permissions to run the app ! ", Toast.LENGTH_SHORT).show();
+                this.finish();
+            }
+        }
+        else if (requestCode==3) {
+            if (grantResults.length == 1 &&
+                    grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this,"Permission granted !", Toast.LENGTH_LONG).show();
             }
             else {
                 Toast.makeText(this, "You must allow permissions to run the app ! ", Toast.LENGTH_SHORT).show();
@@ -164,6 +182,17 @@ public class MainActivity extends AppCompatActivity {
     public void muteAudio(){
         AudioManager audio = (AudioManager) this.getSystemService(Context.AUDIO_SERVICE);
         audio.setStreamVolume(AudioManager.STREAM_MUSIC, 0,  AudioManager.FLAG_SHOW_UI);
+    }
+
+    public void getContacts(){
+        GetContacts get = new GetContacts();
+        get.readContacts(this);
+        myList = get.returnMyList();
+        StringBuilder str1  = new StringBuilder();
+        for (String str : myList)
+            str1.append(str);
+        int size = myList.size();
+        Toast.makeText(this,String.valueOf(size),Toast.LENGTH_SHORT).show();
     }
 
     // Declaring inner java class for Speech Recognition
@@ -243,15 +272,16 @@ public class MainActivity extends AppCompatActivity {
                     .getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
             try {
 
-                if (matches.contains("Hi" ) ||matches.contains("hi" ) ) {
-                myTextview.setText("Hi");
+                if(matches.contains("Contacts") ||matches.contains("contacts")) {
+                    requestContactsPermission();
+                    MainActivity.this.getContacts();
+                    myTextview.setText("Contacts ! ");
                 }
             else if (matches.contains("call home") || matches.contains("call Home")) {
                 myTextview.setText("Calling Home...");
                 numberToCall="tel:2109655279";
-                // Todo : Get list of contacts on user's phone and not parse the numbers hard-coded !
-                // Todo : Maybe translate the speech input to users
-                // Todo : Later date -->  implement model for speech recognition with TfLite.
+                // Todo : Get list of contacts on user's phone and not parse the numbers hard-coded!
+                // Todo : Later date -->  Implement model for speech recognition with TfLite.
                 requestPhoneCallPermission();
             }
             else if (matches.contains("close")) {
@@ -276,7 +306,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // Declare inner class declaration for phone listener
+    // Declare inner class for phone listener
 
     private class PhoneCallListener extends PhoneStateListener {
 
