@@ -25,11 +25,13 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements AsyncResponse {
 
     private final int MY_PERMISSIONS_RECORD_AUDIO = 1;
     private final int REQ_CODE = 100;
@@ -53,6 +55,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
         myTextview.setText(null);
+        GetContacts get = new GetContacts(this);
+        get.delegate=this;
         startAnimation();
         dontLock();
         muteAudio();
@@ -185,14 +189,21 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void getContacts(){
-        GetContacts get = new GetContacts();
-        get.readContacts(this);
-        myList = get.returnMyList();
+        GetContacts get = new GetContacts(this);
+        get.execute();
+    }
+
+    @Override
+    public void processFinish(HashMap<String, String> output) {
         StringBuilder str1  = new StringBuilder();
-        for (String str : myList)
-            str1.append(str);
-        int size = myList.size();
-        Toast.makeText(this,String.valueOf(size),Toast.LENGTH_SHORT).show();
+        Map.Entry<String,String> entry = output.entrySet().iterator().next();
+        String name = entry.getKey();
+        String phone = entry.getValue();
+        for (int i = 0 ; i < output.size() ; i++){
+            str1.append(name).append(" ").append(phone).append(" \n");
+        }
+        int size = output.size();
+        myTextview.setText( String.valueOf(size) + str1);
     }
 
     // Declaring inner java class for Speech Recognition
