@@ -11,13 +11,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class GetContacts extends AsyncTask<Void,Void,HashMap<String,String>>{
-    private HashMap<String,String> phoneNumbers = new HashMap<>();
+     private HashMap<String,String> phoneNumbers = new HashMap<>();
+     public AsyncResponse delegate = null;
      private Context context;
-     public AsyncResponse delegate= new AsyncResponse() {
-         @Override
-         public void processFinish(HashMap<String, String> output) {
-         }
-     };
 
      public GetContacts(Context context){
          this.context=context;
@@ -25,7 +21,7 @@ public class GetContacts extends AsyncTask<Void,Void,HashMap<String,String>>{
 
     @Override
     protected void onPostExecute(HashMap<String,String> resultMap) {
-        delegate.processFinish(resultMap);
+         delegate.myAsyncResponseGetContacts(resultMap);
     }
 
     @Override

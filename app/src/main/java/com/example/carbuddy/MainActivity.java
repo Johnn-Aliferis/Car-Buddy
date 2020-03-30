@@ -33,6 +33,8 @@ import butterknife.ButterKnife;
 
 public class MainActivity extends AppCompatActivity implements AsyncResponse {
 
+    //Todo : Check bug , why my application keeps flashing when SpeechListener is restarted!
+
     private final int MY_PERMISSIONS_RECORD_AUDIO = 1;
     private final int REQ_CODE = 100;
     private String numberToCall;
@@ -48,6 +50,7 @@ public class MainActivity extends AppCompatActivity implements AsyncResponse {
     AnimationDrawable animationDrawable;
     mySpeechRecogniser listener = new mySpeechRecogniser();
     SpeechRecognizer mSpeechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
+    private GetContacts getContacts ;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,8 +58,8 @@ public class MainActivity extends AppCompatActivity implements AsyncResponse {
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
         myTextview.setText(null);
-        GetContacts get = new GetContacts(this);
-        get.delegate=this;
+        getContacts = new GetContacts(this);
+        getContacts.delegate=this;
         startAnimation();
         dontLock();
         muteAudio();
@@ -170,7 +173,7 @@ public class MainActivity extends AppCompatActivity implements AsyncResponse {
 
     // Listening state of phone call & initiate phone call
     public void startPhoneCall() throws SecurityException{
-        PhoneCallListener phoneListener = new PhoneCallListener();
+        PhoneCallListener phoneListener = new PhoneCallListener(this);
         TelephonyManager telephonyManager = (TelephonyManager) this
                 .getSystemService(Context.TELEPHONY_SERVICE);
         telephonyManager.listen(phoneListener,
@@ -189,21 +192,25 @@ public class MainActivity extends AppCompatActivity implements AsyncResponse {
     }
 
     public void getContacts(){
-        GetContacts get = new GetContacts(this);
-        get.execute();
+        getContacts.execute();
     }
 
     @Override
-    public void processFinish(HashMap<String, String> output) {
+    public void myAsyncResponseGetContacts(HashMap<String, String> output) {
+        //Todo :  now that we have contacts , import logic to our project !
         StringBuilder str1  = new StringBuilder();
         Map.Entry<String,String> entry = output.entrySet().iterator().next();
-        String name = entry.getKey();
-        String phone = entry.getValue();
+        String name;
+        String phone;
         for (int i = 0 ; i < output.size() ; i++){
+            name = entry.getKey();
+            phone = entry.getValue();
             str1.append(name).append(" ").append(phone).append(" \n");
         }
         int size = output.size();
         myTextview.setText( String.valueOf(size) + str1);
+        getContacts= new GetContacts(this);
+        getContacts.delegate=this;
     }
 
     // Declaring inner java class for Speech Recognition
@@ -301,9 +308,13 @@ public class MainActivity extends AppCompatActivity implements AsyncResponse {
             else {
                 myTextview.setText("Nothing");
                 }
-            startRecognising();
+           // startRecognising();
             }
-            catch (Exception ignored) {}
+            catch (Exception ignored) {Toast.makeText(MainActivity.this,ignored.toString(),Toast.LENGTH_SHORT).show();}
+            finally {
+                startRecognising();
+            }
+
         }
 
         @Override
@@ -314,34 +325,6 @@ public class MainActivity extends AppCompatActivity implements AsyncResponse {
         @Override
         public void onEvent(int eventType, Bundle params) {
 
-        }
-    }
-
-    // Declare inner class for phone listener
-
-    private class PhoneCallListener extends PhoneStateListener {
-
-        private boolean isPhoneCalling = false;
-
-        @Override
-        public void onCallStateChanged(int state, String incomingNumber) {
-
-            if (TelephonyManager.CALL_STATE_OFFHOOK == state) {
-                isPhoneCalling = true;
-            }
-
-            if (TelephonyManager.CALL_STATE_IDLE == state) {
-                // run when class initial and phone call ended, need detect flag
-                if (isPhoneCalling) {
-                    // restart app
-                    Intent i = getBaseContext().getPackageManager()
-                            .getLaunchIntentForPackage(
-                                    getBaseContext().getPackageName());
-                    i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                    startActivity(i);
-                    isPhoneCalling = false;
-                }
-            }
         }
     }
 }
