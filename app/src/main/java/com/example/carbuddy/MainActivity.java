@@ -161,7 +161,8 @@ public class MainActivity extends AppCompatActivity implements AsyncResponse {
                 this.getPackageName());
         mSpeechRecognizer.setRecognitionListener(listener);
         mSpeechRecognizer.startListening(mSpeechRecognizerIntent);
-        startActivity(mSpeechRecognizerIntent);
+        //TODO : After second time getting contacts speechListener does not hear anymore.. !
+        //startActivity(mSpeechRecognizerIntent);
     }
 
     // Restart speech recogniser
