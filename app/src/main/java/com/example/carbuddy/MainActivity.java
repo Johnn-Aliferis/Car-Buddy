@@ -33,7 +33,6 @@ import butterknife.ButterKnife;
 
 public class MainActivity extends AppCompatActivity implements AsyncResponse {
 
-    //Todo : Check bug , why my application keeps flashing when SpeechListener is restarted!
 
     private final int MY_PERMISSIONS_RECORD_AUDIO = 1;
     private final int REQ_CODE = 100;
@@ -162,7 +161,6 @@ public class MainActivity extends AppCompatActivity implements AsyncResponse {
         mSpeechRecognizer.setRecognitionListener(listener);
         mSpeechRecognizer.startListening(mSpeechRecognizerIntent);
         //TODO : After second time getting contacts speechListener does not hear anymore.. !
-        //startActivity(mSpeechRecognizerIntent);
     }
 
     // Restart speech recogniser
@@ -192,6 +190,7 @@ public class MainActivity extends AppCompatActivity implements AsyncResponse {
         audio.setStreamVolume(AudioManager.STREAM_MUSIC, 0,  AudioManager.FLAG_SHOW_UI);
     }
 
+    // executing asyncTask to get list of contacts
     public void getContacts(){
         getContacts.execute();
     }
@@ -215,6 +214,8 @@ public class MainActivity extends AppCompatActivity implements AsyncResponse {
     }
 
     // Declaring inner java class for Speech Recognition
+    // Todo : Create 3 different speech listeners (one for voice commands, one for contacts matchup and one for dialing numbers ! ) // or find a better way to import logic to our initial one
+    //  we will need to make our existing listener into another class to be used in the other areas of the apps as well !
 
     @SuppressLint("Registered")
     public class mySpeechRecogniser extends Activity implements RecognitionListener {
@@ -299,7 +300,7 @@ public class MainActivity extends AppCompatActivity implements AsyncResponse {
             else if (matches.contains("call home") || matches.contains("call Home")) {
                 myTextview.setText("Calling Home...");
                 numberToCall="tel:2109655279";
-                // Todo : Get list of contacts on user's phone and not parse the numbers hard-coded!
+                // Todo : Get list of contacts
                 // Todo : Later date -->  Implement model for speech recognition with TfLite.
                 requestPhoneCallPermission();
             }
@@ -309,7 +310,6 @@ public class MainActivity extends AppCompatActivity implements AsyncResponse {
             else {
                 myTextview.setText("Nothing");
                 }
-           // startRecognising();
             }
             catch (Exception ignored) {Toast.makeText(MainActivity.this,ignored.toString(),Toast.LENGTH_SHORT).show();}
             finally {
